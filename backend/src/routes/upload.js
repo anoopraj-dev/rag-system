@@ -1,4 +1,5 @@
 import { Router } from "express";
+import chunkText from '../rag/chunker.js'
 
 const router = Router();
 
@@ -15,9 +16,14 @@ router.post('/', (req, res) => {
       })
     }
 
+    //Chunking 
+    const chunks = chunkText(text);
+
+
+
     let doc = {
       id: Date.now(),
-      text,
+      chunks,
       createAt: new Date(),
     }
 
@@ -27,8 +33,8 @@ router.post('/', (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Document recieved',
-      docId: doc.id,
-      length: text.length
+      totalChunks: chunks.length,
+      chunks
     })
 
   } catch (error) {
