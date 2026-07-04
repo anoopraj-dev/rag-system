@@ -1,24 +1,26 @@
 const store = [];
 
-// add chunk + embedding to memory
-
-function addVector({ chunk, embedding, metadata = {} }) {
+// Add chunk + embedding to store
+function addVector({ id, chunk, embedding, metadata = {} }) {
   store.push({
+    id,
     chunk,
     embedding,
     metadata,
   });
 }
 
-
-// get stored vectors 
-
+// Get all vectors in the store
 function getAllVectors() {
   return store;
 }
 
-// cosineSimiltarity
+// Clear the store
+function clear() {
+  store.length = 0;
+}
 
+// Calculate cosine similarity
 function cosineSimilarity(a, b) {
   let dot = 0;
   let magA = 0;
@@ -33,16 +35,12 @@ function cosineSimilarity(a, b) {
   magA = Math.sqrt(magA);
   magB = Math.sqrt(magB);
 
-  //  safety guard (this fixes NaN)
-  if (magA === 0 || magB === 0) {
-    return 0;
-  }
+  if (magA === 0 || magB === 0) return 0;
 
   return dot / (magA * magB);
 }
 
-//search function 
-
+// Search for the topK most similar vectors
 function search(queryVector, topK = 3) {
   const results = [];
 
@@ -50,10 +48,11 @@ function search(queryVector, topK = 3) {
     const score = cosineSimilarity(queryVector, item.embedding);
 
     results.push({
+      id: item.id,
       chunk: item.chunk,
       score,
       metadata: item.metadata,
-    })
+    });
   }
 
   return results
@@ -61,6 +60,9 @@ function search(queryVector, topK = 3) {
     .slice(0, topK);
 }
 
-
-
-export { addVector, getAllVectors, search }
+export default {
+  addVector,
+  getAllVectors,
+  search,
+  clear,
+};

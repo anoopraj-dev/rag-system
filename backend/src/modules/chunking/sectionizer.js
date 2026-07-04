@@ -1,4 +1,4 @@
-//Identify headings and extract
+// Identify headings and extract
 function isHeading(line) {
   return /^#{1,6}\s/.test(line.trim());
 }
@@ -7,10 +7,11 @@ function extractHeading(line) {
   return line.trim().replace(/^#{1,6}\s/, "");
 }
 
-//sectionizer
+// Sectionize text by headings
 function sectionize(text) {
+  if (!text) return [];
+  
   const lines = text.split('\n');
-
   const sections = [];
 
   let currentSection = {
@@ -20,34 +21,33 @@ function sectionize(text) {
 
   for (const line of lines) {
     if (isHeading(line)) {
-      //push previous sections
+      // Push previous section
       if (currentSection.content.length > 0) {
         sections.push({
           title: currentSection.title,
           text: currentSection.content.join('\n').trim(),
-        })
+        });
       }
 
-      //start new section 
+      // Start new section 
       currentSection = {
         title: extractHeading(line),
         content: [],
-      }
+      };
     } else {
       currentSection.content.push(line);
     }
   }
 
-  //push last section 
+  // Push last section 
   if (currentSection.content.length > 0) {
     sections.push({
       title: currentSection.title,
-      text: currentSection.content.join('\n').trim()
-    })
+      text: currentSection.content.join('\n').trim(),
+    });
   }
 
-  return sections
-
+  return sections;
 }
 
 export default sectionize;

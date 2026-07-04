@@ -1,23 +1,21 @@
-function splitByParagraph(text) {
+export function splitByParagraph(text) {
   return text
     .split(/\n\s*\n/)
     .map((part) => part.trim())
     .filter(Boolean);
 }
 
-function splitBySentence(text) {
+export function splitBySentence(text) {
   return text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
 }
 
-function splitByWord(text) {
+export function splitByWord(text) {
   return text
     .split(/\s+/)
     .map((word) => word.trim())
     .filter(Boolean);
 }
 
-function splitByCharacter(text) {
+export function splitByCharacter(text) {
   return text.split('');
 }
-
-export { splitByParagraph, splitBySentence, splitByWord, splitByCharacter }
