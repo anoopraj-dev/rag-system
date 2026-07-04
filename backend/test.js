@@ -1,33 +1,28 @@
-import recursiveChunk from "../backend/src/rag/chunking/recursiveChunker.js"
+import fs from "fs";
+import sectionize from "../backend/src/rag/chunking/sectionizer.js";
+import recursiveChunk from "../backend/src/rag/chunking/recursiveChunker.js";
+import mergeChunks from "../backend/src/rag/chunking/merger.js";
 
-const text = `
-React is a JavaScript library for building user interfaces.
+const text = fs.readFileSync("./sample.txt", "utf-8");
 
-It follows a component-based architecture where UI is split into reusable components.
+// Step 1
+const sections = sectionize(text);
+console.dir(sections, { depth: null });
 
-Hooks like useState and useEffect help manage state and side effects.
+// Step 2
+const chunkedSections = sections.map(section => ({
+  ...section,
+  chunks: recursiveChunk(section.text)
+}));
 
-React Context allows data sharing without prop drilling.
+console.log("CHUNKED:");
+console.dir(chunkedSections, { depth: null });
 
-Express is a backend framework built on Node.js.
+// Step 3
+const mergedSections = chunkedSections.map(section => ({
+  title: section.title,
+  text: mergeChunks(section.chunks)
+}));
 
-It simplifies routing, middleware, and HTTP request handling.
-
-Middleware functions execute before the final route handler.
-
-MongoDB is a NoSQL database.
-
-Aggregation pipelines allow powerful data processing.
-`;
-
-const chunks = recursiveChunk(text, 120);
-
-console.log("Total Chunks:", chunks.length);
-
-chunks.forEach((chunk, index) => {
-  console.log("\n====================");
-  console.log(`Chunk ${index + 1}`);
-  console.log("====================");
-  console.log(chunk);
-  console.log("Length:", chunk.length);
-});
+console.log("MERGED:");
+console.dir(mergedSections, { depth: null });
