@@ -1,0 +1,33 @@
+# React
+
+React is a JavaScript library for building user interfaces. It follows a component-based architecture where the UI is split into reusable pieces. Developers use React to build interactive web applications efficiently.
+
+React applications are built using components. Components can be reused throughout an application, making development faster and improving maintainability.
+
+# React Hooks
+
+Hooks allow functional components to use state and lifecycle features. The most commonly used hooks are useState and useEffect.
+
+useState is used to store component state.
+
+useEffect is used for side effects such as API calls, subscriptions, and timers.
+
+Hooks make code cleaner and reduce the need for class components.
+
+# Node.js
+
+Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows developers to run JavaScript outside the browser.
+
+Node.js uses an event-driven, non-blocking I/O model, making it suitable for building scalable backend services.
+
+Express.js is a popular framework built on top of Node.js.
+
+# MongoDB
+
+MongoDB is a NoSQL document database that stores data as BSON documents.
+
+Collections contain documents.
+
+Documents contain fields.
+
+MongoDB supports indexing, aggregation pipelines, replication, and sharding to efficiently manage large volumes of data.
