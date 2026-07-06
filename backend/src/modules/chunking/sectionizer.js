@@ -1,6 +1,15 @@
 // Identify headings and extract
 function isHeading(line) {
-  return /^#{1,6}\s/.test(line.trim());
+  const trimmed = line.trim();
+  if (/^#{1,6}\s/.test(trimmed)) return true;
+  
+  // Numbered headers: "1. Introduction" or "1.2. React Hooks" (max 50 chars)
+  if (/^\d+(\.\d+)*\.?\s+[A-Z][A-Za-z0-9\s:-]{1,50}$/.test(trimmed)) return true;
+  
+  // Standard short uppercase headers: "INTRODUCTION", "GETTING STARTED" (max 40 chars)
+  if (/^[A-Z][A-Z0-9\s:-]{2,40}$/.test(trimmed)) return true;
+  
+  return false;
 }
 
 function extractHeading(line) {
@@ -8,14 +17,14 @@ function extractHeading(line) {
 }
 
 // Sectionize text by headings
-function sectionize(text) {
+function sectionize(text, defaultTitle = 'Untitled') {
   if (!text) return [];
   
   const lines = text.split('\n');
   const sections = [];
 
   let currentSection = {
-    title: 'Untitled',
+    title: defaultTitle,
     content: [],
   };
 

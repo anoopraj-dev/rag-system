@@ -41,8 +41,10 @@ function cosineSimilarity(a, b) {
 }
 
 // Search for the topK most similar vectors
-function search(queryVector, topK = 3) {
+function search(queryVector, topK) {
   const results = [];
+
+  console.log('items in store', store)
 
   for (const item of store) {
     const score = cosineSimilarity(queryVector, item.embedding);
@@ -55,9 +57,21 @@ function search(queryVector, topK = 3) {
     });
   }
 
+  console.log('results after serarch', results)
+
   return results
     .sort((a, b) => b.score - a.score)
     .slice(0, topK);
+}
+
+// Delete all vectors matching a specific document/section title
+function deleteByTitle(title) {
+  for (let i = store.length - 1; i >= 0; i--) {
+    const currentTitle = store[i].metadata?.title || "Untitled";
+    if (currentTitle === title) {
+      store.splice(i, 1);
+    }
+  }
 }
 
 export default {
@@ -65,4 +79,6 @@ export default {
   getAllVectors,
   search,
   clear,
+  deleteByTitle,
 };
+
