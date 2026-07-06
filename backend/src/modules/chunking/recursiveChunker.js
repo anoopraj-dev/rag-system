@@ -1,99 +1,121 @@
-import { splitByParagraph, splitBySentence, splitByWord, splitByCharacter } from "./splitters.js";
+import { splitByParagraph, splitByLine, splitBySentence, splitByWord, splitByCharacter } from "./splitters.js";
 
 function estimateSize(text) {
-  return text.split(/\s+/).filter(Boolean).length;
+  return text.length;
 }
 
-function recursiveChunker(text, maxSize = 80, overlap = 20) {
+function recursiveChunker(text, maxSize = 500, overlap = 100) {
   if (!text) return [];
 
-  function chunk(text, separatorIndex = 0) {
-    const size = estimateSize(text);
-    if (size <= maxSize) {
-      return [text];
-    }
+  const separators = [
+    { split: splitByParagraph, joinChar: "\n\n" },
+    { split: splitByLine, joinChar: "\n" },
+    { split: splitBySentence, joinChar: " " },
+    { split: splitByWord, joinChar: " " },
+    { split: splitByCharacter, joinChar: "" }
+  ];
 
-    const separators = [
-      { split: splitByParagraph, joinChar: "\n\n" },
-      { split: splitBySentence, joinChar: " " },
-      { split: splitByWord, joinChar: " " },
-      { split: splitByCharacter, joinChar: "" }
-    ];
+  // Helper to split text recursively into non-overlapping pieces that are each <= maxSize
+  function getPieces(subText, absoluteStart = 0, separatorIndex = 0) {
+    const size = estimateSize(subText);
+    if (size <= maxSize) {
+      return [{ text: subText, start: absoluteStart, end: absoluteStart + subText.length }];
+    }
 
     if (separatorIndex >= separators.length) {
-      return [text];
+      return [{ text: subText, start: absoluteStart, end: absoluteStart + subText.length }];
     }
 
-    const { split, joinChar } = separators[separatorIndex];
-    const parts = split(text);
-    
-    let results = [];
+    const { split } = separators[separatorIndex];
+    const parts = split(subText);
+
+    if (parts.length <= 1) {
+      return getPieces(subText, absoluteStart, separatorIndex + 1);
+    }
+
+    const pieces = [];
+    let lastIndex = 0;
+
     for (const part of parts) {
+      const indexInText = subText.indexOf(part, lastIndex);
+      const partAbsoluteStart = absoluteStart + indexInText;
+      
       const partSize = estimateSize(part);
       if (partSize <= maxSize) {
-        results.push(part);
+        pieces.push({
+          text: part,
+          start: partAbsoluteStart,
+          end: partAbsoluteStart + part.length
+        });
       } else {
-        results.push(...chunk(part, separatorIndex + 1));
+        pieces.push(...getPieces(part, partAbsoluteStart, separatorIndex + 1));
       }
+      
+      lastIndex = indexInText + part.length;
     }
 
-    return mergeChunks(results, maxSize, overlap, joinChar);
+    return pieces;
   }
 
-  return chunk(text, 0);
+  const pieces = getPieces(text, 0, 0);
+  return mergePieces(pieces, text, maxSize, overlap);
 }
 
-function mergeChunks(chunks, maxSize, overlap, joinChar) {
-  const merged = [];
-  let currentChunk = [];
-  let currentSize = 0;
+function mergePieces(pieces, originalText, maxSize, overlap) {
+  const chunks = [];
+  if (pieces.length === 0) return [];
 
-  for (const chunk of chunks) {
-    const chunkSize = estimateSize(chunk);
+  let i = 0;
+  while (i < pieces.length) {
+    const chunkStartPiece = pieces[i];
+    let chunkEndPiece = pieces[i];
+    let j = i;
 
-    if (chunkSize > maxSize) {
-      if (currentChunk.length > 0) {
-        merged.push(currentChunk.join(joinChar));
-        currentChunk = [];
-        currentSize = 0;
+    // Expand the chunk as much as possible under maxSize
+    while (j < pieces.length) {
+      const candidateEndPiece = pieces[j];
+      const combinedText = originalText.substring(chunkStartPiece.start, candidateEndPiece.end);
+      const combinedSize = estimateSize(combinedText);
+
+      if (combinedSize <= maxSize || j === i) {
+        chunkEndPiece = candidateEndPiece;
+        j++;
+      } else {
+        break;
       }
-      merged.push(chunk);
-      continue;
     }
 
-    const potentialSeparatorSize = currentChunk.length > 0 ? estimateSize(joinChar) : 0;
-    if (currentSize + potentialSeparatorSize + chunkSize > maxSize) {
-      if (currentChunk.length > 0) {
-        merged.push(currentChunk.join(joinChar));
-      }
+    // Add the chunk
+    chunks.push(originalText.substring(chunkStartPiece.start, chunkEndPiece.end));
 
-      // Carry over overlap chunks from currentChunk
-      const overlapChunks = [];
-      let overlapSize = 0;
-      for (let i = currentChunk.length - 1; i >= 0; i--) {
-        const item = currentChunk[i];
-        const itemSize = estimateSize(item);
-        if (overlapSize + itemSize <= overlap) {
-          overlapChunks.unshift(item);
-          overlapSize += itemSize;
-        } else {
-          break;
-        }
-      }
+    if (j >= pieces.length) {
+      break;
+    }
 
-      currentChunk = [...overlapChunks, chunk];
-      currentSize = estimateSize(currentChunk.join(joinChar));
+    // Determine the next starting piece index (i) based on the overlap
+    let overlapSize = 0;
+    let nextStartIdx = j - 1;
+    for (let k = j - 1; k >= i; k--) {
+      const item = pieces[k];
+      const itemText = originalText.substring(item.start, chunkEndPiece.end);
+      const itemSize = estimateSize(itemText);
+      
+      nextStartIdx = k;
+      overlapSize = itemSize;
+      if (overlapSize >= overlap) {
+        break;
+      }
+    }
+
+    // Guard against infinite loop
+    if (nextStartIdx <= i) {
+      i = j;
     } else {
-      currentChunk.push(chunk);
-      currentSize = estimateSize(currentChunk.join(joinChar));
+      i = nextStartIdx;
     }
   }
 
-  if (currentChunk.length > 0) {
-    merged.push(currentChunk.join(joinChar));
-  }
-
-  return merged;
+  return chunks;
 }
 
 export default recursiveChunker;

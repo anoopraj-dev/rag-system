@@ -1,7 +1,7 @@
 import getEmbedding from "../embedding/embedder.js";
 import vectorStore from "../vectorStore/vectorStore.js";
 
-async function queryEngine(query, topK = 3) {
+async function queryEngine(query, topK) {
   if (!query) {
     throw new Error("Query is required");
   }
@@ -12,15 +12,16 @@ async function queryEngine(query, topK = 3) {
   // 2. Search vector database
   const results = vectorStore.search(queryVector, topK);
 
-  // 3. Build context format
-  const context = results
-    .map((r, i) => `[#${i + 1}] ${r.chunk}`)
-    .join("\n\n");
-
+  // 3. Return direct results without decision engine processing
   return {
-    query,
-    results,
-    context,
+    type: null,
+    answer: results[0] ? results[0].chunk : "No relevant information found.",
+    results: results.map(r => ({
+      id: r.id,
+      chunk: r.chunk,
+      score: r.score,
+      metadata: r.metadata
+    }))
   };
 }
 
