@@ -4,7 +4,7 @@ import extractTextFromFile from "../modules/ingestion/fileExtractor.js";
 async function uploadDocument(req, res) {
   try {
     let text = req.body.text;
-    let filename = undefined;
+    let filename = req.body.title || undefined;
 
     if (req.file) {
       text = await extractTextFromFile(req.file);

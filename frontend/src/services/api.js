@@ -13,6 +13,7 @@ export async function uploadDocument(input, options = {}) {
     headers["Content-Type"] = "application/json";
     body = JSON.stringify({ 
       text: input,
+      title: options.title,
       chunkSize: options.chunkSize,
       chunkOverlap: options.chunkOverlap
     });
