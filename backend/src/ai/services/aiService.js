@@ -15,7 +15,10 @@ class AIService {
       maxTokens: 1000,
     });
 
-    return result;
+    return {
+      ...result,
+      prompt,
+    };
   }
 }
 
